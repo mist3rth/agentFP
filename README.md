@@ -98,4 +98,9 @@ agentFP/
 
 ## 👨‍💻 À propos de l'auteur
 
-Développeur Full-Stack / Expert IA, passionné par la transparence du e-commerce et la création d'outils analytiques métier. Ce projet reflète mon approche méthodique : compréhension approfondie du domaine (ici, la législation complexe du chanvre) et exécution technique rigoureuse (architecture, prompt engineering, UX).
+**Thierry Thiesson**  
+Développeur Full-Stack / Expert IA, passionné par la transparence du e-commerce et la création d'outils analytiques métier. Ce projet reflète mon approche méthodique (BMAD) : compréhension approfondie du domaine (ici, la législation complexe du chanvre) et exécution technique rigoureuse (architecture, prompt engineering, UX).
+
+* 🌐 **Portfolio** : [https://present-me-lake.vercel.app/](https://present-me-lake.vercel.app/)
+* 🐙 **GitHub** : [https://github.com/mist3rth](https://github.com/mist3rth)
+* 🚀 **Projet** : [Scanner d'Intégrité CBD (agentFP)](https://github.com/mist3rth/agentFP)
