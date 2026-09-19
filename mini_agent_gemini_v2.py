@@ -1,28 +1,30 @@
 """
-Agent d'audit CRO/UX de fiche produit, version Gemini.
+Agent d'audit CRO/UX de fiche produit, version Gemini V2 (Playwright).
 
 Installation :
-    pip install -U google-genai
+    pip install -r requirements.txt
+    playwright install chromium
 
 Cle API (gratuite) :
     1. https://aistudio.google.com/apikey -> "Create API key"
     2. export GEMINI_API_KEY="ta_cle"
 
 Lancement :
-    python mini_agent_gemini.py [URL_OPTIONNELLE]
+    python mini_agent_gemini_v2.py [URL_OPTIONNELLE]
 """
 
 import re
 import sys
-import requests
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 from bs4 import BeautifulSoup
 from google import genai
 from google.genai import types
+from playwright.sync_api import sync_playwright
 
 MODEL = "gemini-flash-lite-latest"  # remplace par un autre modele de ton compte AI Studio si besoin
 
-# Colle ici le contenu complet de la fiche produit a auditer :
-# titre, description, prix, CTA, livraison/retours, avis, variantes...
+# Colle ici le contenu complet de la fiche produit a auditer si pas d'URL :
 PAGE_CONTENT = """
 Sweat a capuche unisexe en coton bio 320g/m2. Coupe oversize, poche kangourou,
 cordon de serrage assorti.
@@ -50,14 +52,7 @@ RULES = [
 
 
 def check_rule(rule_id: str) -> str:
-    """Verifie une regle CRO/UX precise sur la fiche produit et retourne un constat.
-
-    Args:
-      rule_id: une des regles suivantes : specifications_presentes,
-        orientation_benefices, cta_clair, reassurance_livraison_retours,
-        preuve_sociale, urgence_ethique, lisibilite_structure,
-        disponibilite_variantes.
-    """
+    """Verifie une regle CRO/UX precise sur la fiche produit et retourne un constat."""
     print(f"  outil appele : check_rule({rule_id})")
     text = PAGE_CONTENT
 
@@ -82,8 +77,8 @@ def check_rule(rule_id: str) -> str:
         result = "Preuve sociale presente." if hit else "Aucun avis client ni note visible, levier de conversion absent."
 
     elif rule_id == "urgence_ethique":
-        vague = re.search(r"d[ée]p[ée]chez|ne ratez pas|offre limit[ée]e(?!.*\d)", text, re.I)
-        chiffree = re.search(r"plus que \d+|reste(nt)? \d+|jusqu'? ?\à.*\d", text, re.I)
+        vague = re.search(r"d[ée]p[ée]chez|ne ratez pas|offre limit[ée]e", text, re.I)
+        chiffree = re.search(r"plus que \d+|reste(nt)? \d+|exp[ée]di[ée] dans (les\s)?\d+", text, re.I)
         if chiffree:
             result = "Urgence chiffree presente : verifier qu'elle reflete un stock reel avant publication (sinon dark pattern)."
         elif vague:
@@ -165,18 +160,24 @@ def main():
     if len(sys.argv) > 1:
         url = sys.argv[1]
         url_info = url
-        print(f"Telechargement de {url}...")
+        print(f"Telechargement de {url} avec Playwright...")
         try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                page.goto(url, timeout=30000)
+                # On attend 2 secondes pour que le JavaScript charge les widgets (avis, compteurs, etc.)
+                page.wait_for_timeout(2000)
+                html = page.content()
+                browser.close()
+
+            soup = BeautifulSoup(html, 'html.parser')
             for script in soup(["script", "style"]):
                 script.decompose()
             PAGE_CONTENT = soup.get_text(separator=' ', strip=True)
-            print(f"Contenu recupere ({len(PAGE_CONTENT)} caracteres).")
+            print(f"Contenu dynamique recupere ({len(PAGE_CONTENT)} caracteres).")
         except Exception as e:
-            print(f"Erreur lors de la recuperation de l'URL : {e}")
+            print(f"Erreur lors de la recuperation de l'URL avec Playwright : {e}")
             return
 
     print("Pre-calcul des regles en cours...")
@@ -198,18 +199,19 @@ def main():
 
 /FORMAT_OUTPUT: Output standard Markdown ONLY. Do NOT write "H1:" or "H2:". Use hashtags for headings:
 # Audit **[Produit]** (**[Site]**)
-## 🏆 Note Globale d'Audit (/100)
-## 📋 Fiche Technique Synthétique (Prix, Taux, Type)
-## 1. Résumé Exécutif
-## 2. Traçabilité & Labo (Origine, Culture, COA)
-## 3. Dark Patterns & Biais
-## 4. Tableau Constats (Catégorie, Détail, Impact, Effort, Priorité 🔴🟡🟢)
-## 5. Plan Action (🔴 Urgences Légales avec Rappel Loi, 🟡 Éthique, 🟢 UX/CRO)
+## 1. 🏆 Note Globale d'Audit (/100)
+## 2. 📋 Fiche Technique Synthétique (Prix, Taux, Type)
+## 3. 📝 Résumé Exécutif
+## 4. 🔬 Traçabilité & Labo (Origine, Culture, COA)
+## 5. 🕷️ Dark Patterns & Biais
+## 6. 📊 Tableau Constats (Catégorie, Détail, Impact, Effort, Priorité 🔴🟡🟢)
+## 7. 🚀 Plan Action (🔴 Urgences Légales avec Rappel Loi, 🟡 Éthique, 🟢 UX/CRO)
 
 /RULES:
 1. Gras OBLIGATOIRE sur taux aberrants, expressions illégales et faits extraits.
 2. Direct, factuel, zéro introduction, pas de blabla.
-3. ANTI-HALLUCINATION : Ne RIEN inventer. Si une anomalie (compteur 00:00:00, avis, pop-up) n'est pas PRESENTE dans le texte source ou les REGEX_FLAGS, ne la mentionne absolument pas. Base-toi uniquement sur les faits fournis.
+3. ANTI-HALLUCINATION : Ne RIEN inventer. Si une anomalie (compteur 00:00:00, avis, pop-up) n'est pas PRESENTE dans le texte source ou les REGEX_FLAGS, ne la mentionne absolument pas.
+4. COA (Certificat d'analyse) : S'il n'y a pas de mention d'un document PDF ou d'une analyse spécifique au LOT du produit, indique formellement que le COA est absent. Une simple mention "nous testons en laboratoire" ne compte pas comme un COA.
 """
 
     print("Tache envoyee a l'agent (1 seule requete API)...\n")

@@ -17,7 +17,7 @@ J'ai conçu ce projet comme un **Micro-SaaS d'audit** pour automatiser la détec
 
 ## ⚙️ Fonctionnalités Principales
 
-*   **Extraction Automatisée (Scraping)** : Le backend Python extrait le contenu sémantique d'une URL produit en ignorant le bruit (scripts, styles) via `BeautifulSoup`.
+*   **Extraction Automatisée (Scraping V2)** : Le backend Python extrait le contenu sémantique d'une URL produit en exécutant le JavaScript via **Playwright**. Cela permet de capturer les éléments dynamiques (compteurs promotionnels, avis clients chargés en AJAX, accordéons cachés) avant d'ignorer le bruit HTML via `BeautifulSoup`.
 *   **Moteur de Règles Pré-calculées (Regex)** : Avant d'interroger l'IA, le système vérifie 12 règles strictes (présence du mot "gummies", taux de CBD abérrants > 12%, lexique thérapeutique illégal). Cela limite les hallucinations de l'IA et fournit des preuves factuelles.
 *   **Analyse Sémantique (LLM)** : Utilisation de l'API Google Gemini (`gemini-flash-lite-latest`) couplée à un *Prompt Engineering* très strict pour synthétiser un rapport d'audit formaté (Score global, plan d'action priorisé 🔴🟠🟢).
 *   **Base de Connaissances Intégrée (SSR)** : Un blog de décryptage du marché rendu côté serveur (Server-Side Rendering via Jinja2) pour une indexation SEO optimale.
@@ -29,7 +29,7 @@ J'ai conçu ce projet comme un **Micro-SaaS d'audit** pour automatiser la détec
 
 *   **Backend** : Python 3, Flask, Jinja2
 *   **IA & NLP** : Google GenAI SDK (Gemini)
-*   **Scraping** : Requests, BeautifulSoup4
+*   **Scraping Dynamique** : Playwright (Chromium headless), BeautifulSoup4
 *   **Frontend** : HTML5, Vanilla CSS3 (Custom Properties), JavaScript ES6
 *   **Rendu Markdown** : Marked.js
 
@@ -39,6 +39,7 @@ J'ai conçu ce projet comme un **Micro-SaaS d'audit** pour automatiser la détec
 agentFP/
 │
 ├── app.py                  # Serveur Flask et logique backend (API + Routes)
+├── mini_agent_gemini_v2.py # Moteur d'audit V2 utilisant Playwright et Gemini
 ├── requirements.txt        # Dépendances Python
 ├── data/
 │   └── articles.json       # Base de données des articles du blog
@@ -76,6 +77,7 @@ agentFP/
    # Sur Windows : venv\Scripts\activate
    # Sur Mac/Linux : source venv/bin/activate
    pip install -r requirements.txt
+   playwright install chromium
    ```
 
 3. **Configurer la clé API**

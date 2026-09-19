@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify, render_template, abort
 from flask_cors import CORS
 from google import genai
 from google.genai import types
+from playwright.sync_api import sync_playwright
 
 app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
@@ -163,15 +164,20 @@ def audit():
     url = data['url']
     
     try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url, timeout=30000)
+            page.wait_for_timeout(2000)
+            html = page.content()
+            browser.close()
+            
+        soup = BeautifulSoup(html, 'html.parser')
         for script in soup(["script", "style"]):
             script.decompose()
         current_text_context = soup.get_text(separator=' ', strip=True)
     except Exception as e:
-        return jsonify({"error": f"Erreur de téléchargement: {str(e)}"}), 500
+        return jsonify({"error": f"Erreur de téléchargement avec Playwright: {str(e)}"}), 500
 
     try:
         # Pre-calcul des règles en Python pour eviter de faire 12 requetes API (Rate Limit)
@@ -190,20 +196,20 @@ def audit():
 /REGEX_FLAGS:
 {rules_text}
 
-/FORMAT_OUTPUT: Markdown strict
-- H1: Audit **[Produit]** (**[Site]**)
-- H2: Note Globale d'Audit : [Score]/100
-- Paragraphe court expliquant la note.
-- H2: Fiche Technique Synthétique (Prix, Taux, Type)
-- H2: 1. Résumé Exécutif
-- H2: 2. Traçabilité & Labo (Origine, Culture, COA)
-- H2: 3. Dark Patterns & Biais
-- H2: 4. Tableau Constats (Catégorie, Détail, Impact, Effort, Priorité 🔴🟠🟢)
-- H2: 5. Plan Action (🔴 Urgences Légales avec Rappel Loi, 🟠 Éthique, 🟢 UX/CRO)
+/FORMAT_OUTPUT: Output standard Markdown ONLY. Do NOT write "H1:" or "H2:". Use hashtags for headings:
+# Audit **[Produit]** (**[Site]**)
+## 1. 🏆 Note Globale d'Audit (/100)
+## 2. 📋 Fiche Technique Synthétique (Prix, Taux, Type)
+## 3. 📝 Résumé Exécutif
+## 4. 🔬 Traçabilité & Labo (Origine, Culture, COA)
+## 5. 🕷️ Dark Patterns & Biais
+## 6. 📊 Tableau Constats (Catégorie, Détail, Impact, Effort, Priorité 🔴🟡🟢)
+## 7. 🚀 Plan Action (🔴 Urgences Légales avec Rappel Loi, 🟡 Éthique, 🟢 UX/CRO)
 
 /RULES:
 1. Gras OBLIGATOIRE sur taux aberrants, expressions illégales et faits extraits.
 2. Direct, factuel, zéro introduction, pas de blabla.
+3. ANTI-HALLUCINATION : Ne RIEN inventer. Si une anomalie (compteur 00:00:00, avis, pop-up) n'est pas PRESENTE dans le texte source ou les REGEX_FLAGS, ne la mentionne absolument pas. Base-toi uniquement sur les faits fournis.
 """
         response = client.models.generate_content(
             model=MODEL,
