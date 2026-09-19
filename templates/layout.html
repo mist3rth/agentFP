@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Scanner IA - Conformité & Transparence E-commerce{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Librairie Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand">
+                <i data-lucide="shield-check"></i>
+                Scanner CBD
+            </a>
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Audit IA</a>
+                <a href="{{ url_for('guides') }}" class="{% if request.endpoint != 'index' %}active{% endif %}">Guides & Décryptages</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-container">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script>
+      // Initialise les icones sur chaque page
+      lucide.createIcons();
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<header class="hero">
+    <div class="hero-icon">
+        <i data-lucide="shield-check"></i>
+    </div>
+    <h1>Scanner d'Intégrité CBD</h1>
+    <p class="subtitle">Auditez instantanément la fiabilité d'une page produit.</p>
+    <div class="explanation-box">
+        <p>Notre IA analyse en profondeur le discours commercial pour protéger les consommateurs. <strong>Sont audités :</strong></p>
+        <ul>
+            <li><i data-lucide="activity"></i> <strong>Allégations médicales illégales</strong> (promesses de guérison abusives).</li>
+            <li><i data-lucide="search"></i> <strong>Traçabilité & Transparence</strong> (provenance, laboratoires indépendants).</li>
+            <li><i data-lucide="alert-triangle"></i> <strong>Dark Patterns</strong> (fausse urgence, manipulation psychologique).</li>
+        </ul>
+    </div>
+</header>
+
+<main>
+    <form id="audit-form" class="audit-form">
+        <div class="input-group">
+            <div class="input-wrapper">
+                <i data-lucide="link" class="input-icon"></i>
+                <input type="url" id="url-input" placeholder="Collez l'URL de la fiche produit ici..." required>
+            </div>
+            <button type="submit" id="submit-btn">
+                <i data-lucide="scan"></i> Lancer l'Audit
+            </button>
+        </div>
+    </form>
+
+    <div id="loading-state" class="loading-state hidden">
+        <div class="spinner"></div>
+        <p>Scanner neuronal en cours d'analyse...</p>
+        <div class="loading-steps">
+            <span><i data-lucide="download-cloud"></i> Extraction des données sémantiques...</span>
+            <span><i data-lucide="cpu"></i> Évaluation de la conformité légale...</span>
+            <span><i data-lucide="file-text"></i> Génération du rapport de confiance...</span>
+        </div>
+    </div>
+
+    <div id="error-state" class="error-state hidden"></div>
+
+    <div id="result-container" class="result-container hidden">
+        <div class="result-header">
+            <h2><i data-lucide="clipboard-check"></i> Rapport d'Intégrité</h2>
+            <div class="result-actions">
+                <button id="copy-btn" class="secondary-btn">
+                    <i data-lucide="copy"></i> Copier
+                </button>
+            </div>
+        </div>
+        <div id="report-content" class="report-content markdown-body"></div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}

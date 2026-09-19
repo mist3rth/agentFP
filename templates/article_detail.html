@@ -1,0 +1,158 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ article.title }} - Scanner CBD{% endblock %}
+
+{% block content %}
+<article class="single-article">
+    <header class="article-header">
+        <a href="{{ url_for('guides') }}" class="back-link"><i data-lucide="arrow-left"></i> Retour aux guides</a>
+        <div class="article-meta-top">
+            <span class="article-category category-{{ article.category | lower }}">{{ article.category }}</span>
+            <span class="article-date"><i data-lucide="calendar"></i> {{ article.date }}</span>
+            <span class="article-read-time"><i data-lucide="clock"></i> {{ article.readTime }}</span>
+        </div>
+        <h1 class="article-h1"><span class="article-number">#{{ article.number }}</span> {{ article.title }}</h1>
+        <p class="article-subtitle">{{ article.subtitle }}</p>
+        <div class="article-author-block">
+            <i data-lucide="shield"></i> <span>Rédigé par le {{ article.author }}</span>
+        </div>
+    </header>
+
+    <figure class="article-main-image">
+        <img src="{{ article.imageUrl }}" alt="{{ article.title }}">
+        <figcaption>{{ article.imageCaption }}</figcaption>
+    </figure>
+
+    <div class="article-body">
+        <div class="article-excerpt-large">
+            {{ article.excerpt }}
+        </div>
+
+        {% for section in article.sections %}
+            <section class="article-section">
+                <h2>{{ section.heading }}</h2>
+                {% if section.subheading %}
+                    <h3>{{ section.subheading }}</h3>
+                {% endif %}
+                
+                {% for p in section.paragraphs %}
+                    <p>{{ p }}</p>
+                {% endfor %}
+
+                {% if section.bulletPoints %}
+                    <ul class="article-list">
+                        {% for bp in section.bulletPoints %}
+                            <li>{{ bp }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% if section.callout %}
+                    <div class="article-callout callout-{{ section.callout.type }}">
+                        <div class="callout-icon">
+                            {% if section.callout.type == 'warning' %}
+                                <i data-lucide="alert-triangle"></i>
+                            {% elif section.callout.type == 'legal' %}
+                                <i data-lucide="scale"></i>
+                            {% elif section.callout.type == 'technical' %}
+                                <i data-lucide="microscope"></i>
+                            {% else %}
+                                <i data-lucide="info"></i>
+                            {% endif %}
+                        </div>
+                        <div class="callout-content">
+                            <h4>{{ section.callout.title }}</h4>
+                            <p>{{ section.callout.text }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </section>
+        {% endfor %}
+
+        {% if article.formulas %}
+            <section class="article-section formulas-section">
+                <h2><i data-lucide="function-square"></i> Formules & Calculs Techniques</h2>
+                <div class="formulas-grid">
+                    {% for formula in article.formulas %}
+                        <div class="formula-card">
+                            <h4>{{ formula.name }}</h4>
+                            <div class="formula-math">
+                                <!-- On simule l'affichage de formule complexe -->
+                                <code>{{ formula.formula }}</code>
+                            </div>
+                            <p>{{ formula.explanation }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        {% if article.tableData %}
+            <section class="article-section table-section">
+                <h2><i data-lucide="table"></i> Données Cliniques</h2>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Paramètre</th>
+                                <th>Voie Pulmonaire (Inhalation)</th>
+                                <th>Voie Orale (Ingestion)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in article.tableData %}
+                                <tr>
+                                    <td><strong>{{ row.aspect }}</strong></td>
+                                    <td>{{ row.inhalation }}</td>
+                                    <td>{{ row.ingestion }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endif %}
+        
+        {% if article.warningSignals %}
+            <section class="article-section warnings-section">
+                <h2><i data-lucide="alert-circle"></i> Signaux d'Alerte (Red Flags)</h2>
+                <ul class="warning-list">
+                    {% for sig in article.warningSignals %}
+                        <li><i data-lucide="x-circle"></i> {{ sig }}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+
+        {% if article.legalReferences %}
+            <section class="article-section legal-section">
+                <h2><i data-lucide="book-open-check"></i> Référentiel Juridique</h2>
+                <div class="legal-grid">
+                    {% for ref in article.legalReferences %}
+                        <div class="legal-card">
+                            <div class="legal-header">
+                                <span class="legal-code">{{ ref.code }}</span>
+                                <span class="legal-article">{{ ref.article }}</span>
+                            </div>
+                            <p class="legal-desc">{{ ref.description }}</p>
+                            <div class="legal-sanction">
+                                <strong>Sanction :</strong> {{ ref.sanction }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <section class="article-section takeaways-section">
+            <h2><i data-lucide="check-circle-2"></i> Ce qu'il faut retenir</h2>
+            <ul class="takeaways-list">
+                {% for ta in article.keyTakeaways %}
+                    <li>{{ ta }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+    </div>
+</article>
+{% endblock %}
